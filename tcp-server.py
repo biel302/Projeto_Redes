@@ -4,12 +4,28 @@ import threading
 
 print_lock = threading.Lock()
 
-def verificarLogin(login, senha, lista):
-    if login not in lista:
+
+def recuperar_usuario(arquivo):
+    try:
+        arq = open(arquivo, 'r')
+    except FileNotFoundError:
+        return
+    else:
+        for linha in arq:
+            info = tokenizar(linha)
+            DIC_USUARIOS[info[0]] = info[1]
+
+def salvar_usuarios(arquivo):
+    with open(arquivo, 'w') as arq:
+        for usuario in DIC_USUARIOS:
+            arq.wirte(usuario+';'+DIC_USUARIOS+'\n')
+
+def verificarLogin(login, senha):
+    if login not in DIC_USUARIOS:
         return "1"
     else:
-        for x in range(0, len(lista)):
-            if login == lista[x] and senha == lista[x+1]:
+        for key in DIC_USUARIOS:
+            if login == key and senha == DIC_USUARIOS[key]:
                 return "2"
         return "3"
 
@@ -51,9 +67,9 @@ def connection(client):
             
             login = verification[0]
             senha = verification[1]
-            
-            existe = verificarLogin(login, senha, lista)
-
+            print(login, senha)
+            existe = verificarLogin(login, senha)
+            print(existe)
             if existe == "2":
                 msg = "Olá {}!".format(login)
                 client.send(msg.encode())
@@ -76,6 +92,7 @@ def connection(client):
 
         data = data + b' OK'
         client.send(data)
+    
     client.close()
     arq.close()
     
@@ -98,11 +115,12 @@ def main():
         
         
         print("Conexão recebida com", str(adr))
-        #arquivo = open(str(adr).txt, "wb")
 
-        start_new_thread(connection, tuple([conexao]))
+        threading.Thread(target = connection, args=[conexao]).start()
     skt.close
 
 if __name__ == '__main__':
+    DIC_USUARIOS = {}
+    recuperar_usuario("server")
     main()
 
